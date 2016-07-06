@@ -28,8 +28,11 @@ def main():
             #text_symbolizer(labels)
             
             no_labels = ft_style.create_rule(token)
-            point_symbolizer(no_labels,status)
+            
             no_labels.Filter=commod_filter(no_labels,commods.commods[key]) + status_filter(no_labels,operating_statuses[status])
+            no_labels.MinScaleDenominator="8000000"
+            point_symbolizer(no_labels,status)
+            sld.validate()
             with open(os.path.join('sld',filename), "w") as sld_file:
                 sld_file.write(sld.as_sld())
 
