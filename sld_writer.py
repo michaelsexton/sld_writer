@@ -22,8 +22,9 @@ def main():
             ustyle = nl.create_userstyle()
             ft_style = ustyle.create_featuretypestyle()
             labels=ft_style.create_rule(token+"_labels")
-            labels.MaxScaleDenominator="8000000"
             labels.Filter=commod_filter(labels,commods.commods[key]) + status_filter(labels,operating_statuses[status])
+            labels.MaxScaleDenominator="8000000"
+            
             point_symbolizer(labels,status)
             #text_symbolizer(labels)
             
@@ -32,7 +33,7 @@ def main():
             no_labels.Filter=commod_filter(no_labels,commods.commods[key]) + status_filter(no_labels,operating_statuses[status])
             no_labels.MinScaleDenominator="8000000"
             point_symbolizer(no_labels,status)
-            sld.validate()
+            #sld.validate()
             with open(os.path.join('sld',filename), "w") as sld_file:
                 sld_file.write(sld.as_sld())
 
