@@ -25,10 +25,11 @@ def main():
             labels.MaxScaleDenominator="8000000"
             labels.Filter=commod_filter(labels,commods.commods[key]) + status_filter(labels,operating_statuses[status])
             point_symbolizer(labels,status)
+            #text_symbolizer(labels)
             
             no_labels = ft_style.create_rule(token)
             point_symbolizer(no_labels,status)
-            labels.Filter=commod_filter(labels,commods.commods[key]) + status_filter(labels,operating_statuses[status])
+            no_labels.Filter=commod_filter(no_labels,commods.commods[key]) + status_filter(no_labels,operating_statuses[status])
             with open(os.path.join('sld',filename), "w") as sld_file:
                 sld_file.write(sld.as_sld())
 
@@ -75,14 +76,15 @@ def colour(status):
 def point_symbolizer(rule, status):
     ps = PointSymbolizer(rule)
     graphic = Graphic(ps)
-    graphic.Size = '10'
-    mark = Mark(ps)
+    
+    mark = Mark(graphic)
+    mark.WellKnownName = 'circle'
     fill = Fill(mark)
     fill.create_cssparameter("fill",colour(status))
     stroke = Stroke(mark)
     stroke.create_cssparameter("stroke","#000000")
     stroke.create_cssparameter("stroke-width","1")
-    mark.WellKnownName = 'circle'
+    graphic.Size = '10'
     
 def text_symbolizer(rule):
     ts = TextSymbolizer(rule)
@@ -94,10 +96,11 @@ def text_symbolizer(rule):
     
     
 def label(ts):
-    label_element=rule._node.makeelement('{%s}Label' % SLDNode._nsmap['ogc'])
-    label_property_element = rule._node.makeelement('{%s}PropertyName' % SLDNode._nsmap['sld'])
-    label_property_element._node.append("NAME")
-    label_element._node.append(label_property_element)
+    label_element=ts._node.makeelement('{%s}Label' % SLDNode._nsmap['ogc'])
+    label_property_element = ts._node.makeelement('{%s}PropertyName' % SLDNode._nsmap['sld'])
+    ts._node.append(label_property_element)
+    label_property_element = "NAME"
+    label_element.append = label_property_element
     return label_element
 
 main()
