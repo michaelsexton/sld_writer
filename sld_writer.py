@@ -33,7 +33,7 @@ def main():
             no_labels.Filter=commod_filter(no_labels,commods.commods[key]) + status_filter(no_labels,operating_statuses[status])
             no_labels.MinScaleDenominator="8000000"
             point_symbolizer(no_labels,status)
-            #sld.validate()
+            sld.validate()
             with open(os.path.join('sld',filename), "w") as sld_file:
                 sld_file.write(sld.as_sld())
 
@@ -59,6 +59,9 @@ def commod_filter(rule,commod):
     else:
         c_filter = Filter(rule)
         prop = PropertyCriterion(c_filter,'PropertyIsLike')
+        prop._node.set("escape","!")
+        prop._node.set("wildCard","*")
+        prop._node.set("singleChar","#")
         prop.PropertyName = "COMMODNAMES"
         prop.Literal = "*"+commod+"*"
         setattr(c_filter, 'PropertyIsLike', prop)
