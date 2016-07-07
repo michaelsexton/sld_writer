@@ -4,39 +4,54 @@ import errno
 from sld import *
 
 
+
 def main():
     try:
         os.makedirs('sld')
     except OSError as exception:
         if exception.errno != errno.EEXIST:
             raise
-
-    operating_statuses = commods.operating_statuses
-    for key in commods.commods.keys():
-        for status in operating_statuses.keys():
-            token = key+"_"+status
-            filename = token+".sld"
-
-            sld = StyledLayerDescriptor()
-            nl = sld.create_namedlayer(get_name(commods.commods[key]))
-            ustyle = nl.create_userstyle()
-            ft_style = ustyle.create_featuretypestyle()
-            labels=ft_style.create_rule(token+"_labels")
+    all_statuses=commods.operating_statuses["with_commods"].copy()
+    all_statuses.update(commods.operating_statuses["no_commods"])
+    for status in all_statuses.keys():
+        token = status
+        if commods.operating_statuses["with_commods"].has_key(status):
+            for commod in commods.commods.keys():
+               if not commod is None:
+                   token = commod+"_"+status
+               
+                   generate_sld(token,status,commod) 
+        generate_sld(token,status) 
+    
             
-            labels.Filter=commod_filter(labels,commods.commods[key]) + status_filter(labels,operating_statuses[status])
-            labels.MaxScaleDenominator="8000000"
-            
-            point_symbolizer(labels,status)
-            text_symbolizer(labels)
-            
-            no_labels = ft_style.create_rule(token)
-            
-            no_labels.Filter=commod_filter(no_labels,commods.commods[key]) + status_filter(no_labels,operating_statuses[status])
-            no_labels.MinScaleDenominator="8000000"
-            point_symbolizer(no_labels,status)
-            sld.validate()
-            with open(os.path.join('sld',filename), "w") as sld_file:
-                sld_file.write(sld.as_sld(pretty_print=True))
+def generate_sld(token,status,commod=None):
+    filename = token+".sld"
+    status_dict = [a for a in commods.operating_statuses.values() if a.has_key(status)][0]
+    sld = StyledLayerDescriptor()
+    nl = sld.create_namedlayer(get_name(commods.commods[commod]))
+    ustyle = nl.create_userstyle()
+    ft_style = ustyle.create_featuretypestyle()
+    labels=ft_style.create_rule(token+"_labels")
+    if commod is None:
+        labels.Filter=  status_filter(labels,status_dict[status])
+    else:
+        labels.Filter=  status_filter(labels,status_dict[status]) + commod_filter(labels,commods.commods[commod])
+    labels.MaxScaleDenominator="8000000"
+    point_symbolizer(labels,status)
+    text_symbolizer(labels)
+    
+    no_labels = ft_style.create_rule(token)
+    
+    if commod is None:
+        no_labels.Filter= status_filter(no_labels,status_dict[status])
+    else:
+        no_labels.Filter= status_filter(no_labels,status_dict[status]) +commod_filter(no_labels,commods.commods[commod])
+    no_labels.MinScaleDenominator="8000000"
+    point_symbolizer(no_labels,status)
+    print filename
+    #sld.validate()
+    with open(os.path.join('sld',filename), "w") as sld_file:
+        sld_file.write(sld.as_sld(pretty_print=True))
 
 
 def get_name(s):
@@ -77,7 +92,7 @@ def status_filter(rule,status):
     return s_filter
 
 def colour(status):
-    colours = {"opr":"#ff0000","dps":"#ffff00","his":"#00dc00"}
+    colours = {"opr":"#ff0000","dps":"#ffff00","his":"#00dc00","cam":"#aaaaaa"}
     return colours[status]
 
 
@@ -88,7 +103,11 @@ def point_symbolizer(rule, status):
     mark = Mark(graphic)
     mark.WellKnownName = 'circle'
     fill = Fill(mark)
-    fill.create_cssparameter("fill",colour(status))
+    css_parameter = CssParameter(fill,0)
+    css_parameter._node.attrib['name']="fill"
+    css_parameter._node.text=colour(status)
+    fill.CssParameter=css_parameter
+    #fill.create_cssparameter("fill",colour(status))
     stroke = Stroke(mark)
     stroke.create_cssparameter("stroke","#000000")
     stroke.create_cssparameter("stroke-width","1")
