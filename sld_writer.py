@@ -10,23 +10,24 @@ def main():
     except OSError as exception:
         if exception.errno != errno.EEXIST:
             raise
-    #sld_template = StyledLayerDescriptor("template.sld")
+
     operating_statuses = commods.operating_statuses
     for key in commods.commods.keys():
         for status in operating_statuses.keys():
             token = key+"_"+status
             filename = token+".sld"
-            #commod_filter = Filter()
+
             sld = StyledLayerDescriptor()
             nl = sld.create_namedlayer(get_name(commods.commods[key]))
             ustyle = nl.create_userstyle()
             ft_style = ustyle.create_featuretypestyle()
             labels=ft_style.create_rule(token+"_labels")
+            
             labels.Filter=commod_filter(labels,commods.commods[key]) + status_filter(labels,operating_statuses[status])
             labels.MaxScaleDenominator="8000000"
             
             point_symbolizer(labels,status)
-            #text_symbolizer(labels)
+            text_symbolizer(labels)
             
             no_labels = ft_style.create_rule(token)
             
@@ -35,7 +36,7 @@ def main():
             point_symbolizer(no_labels,status)
             sld.validate()
             with open(os.path.join('sld',filename), "w") as sld_file:
-                sld_file.write(sld.as_sld())
+                sld_file.write(sld.as_sld(pretty_print=True))
 
 
 def get_name(s):
@@ -95,19 +96,27 @@ def point_symbolizer(rule, status):
     
 def text_symbolizer(rule):
     ts = TextSymbolizer(rule)
-    ts._node.append(label(ts))
+    text_label = Label(ts)
+    text_label.PropertyName="NAME"
+    #ts._node.append(label(ts))
     font = Font(ts)
     font.create_cssparameter("font-family","Arial")
     font.create_cssparameter("font-size","12")
     font.create_cssparameter("font-style","normal")
-    
-    
-def label(ts):
-    label_element=ts._node.makeelement('{%s}Label' % SLDNode._nsmap['ogc'])
-    label_property_element = ts._node.makeelement('{%s}PropertyName' % SLDNode._nsmap['sld'])
-    ts._node.append(label_property_element)
-    label_property_element = "NAME"
-    label_element.append = label_property_element
-    return label_element
+    label_placement = LabelPlacement(ts)
+    point_placement = PointPlacement(label_placement)
+    anchor_point = AnchorPoint(point_placement)
+    anchor_point.AnchorPointX="0.5"
+    anchor_point.AnchorPointY="0.0"
+    displacement = Displacement(point_placement)
+    displacement.DisplacementX="0"
+    displacement.DisplacementY="6"
+    halo = Halo(ts)
+    halo.Radius="2"
+    halo_fill=Fill(halo)
+    halo_fill.create_cssparameter("fill","#ffffff")
+    text_fill=Fill(ts)
+    text_fill.create_cssparameter("fill","#000000")
+
 
 main()
