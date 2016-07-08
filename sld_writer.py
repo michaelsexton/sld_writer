@@ -15,13 +15,16 @@ def main():
     all_statuses.update(commods.operating_statuses["no_commods"])
     for status in all_statuses.keys():
         token = status
+        print token
+        generate_sld(token,status) 
         if commods.operating_statuses["with_commods"].has_key(status):
             for commod in commods.commods.keys():
                if not commod is None:
                    token = commod+"_"+status
                
                    generate_sld(token,status,commod) 
-        generate_sld(token,status) 
+        print token
+        
     
             
 def generate_sld(token,status,commod=None):
@@ -48,7 +51,7 @@ def generate_sld(token,status,commod=None):
         no_labels.Filter= status_filter(no_labels,status_dict[status]) +commod_filter(no_labels,commods.commods[commod])
     no_labels.MinScaleDenominator="8000000"
     point_symbolizer(no_labels,status)
-    print filename
+
     #sld.validate()
     with open(os.path.join('sld',filename), "w") as sld_file:
         sld_file.write(sld.as_sld(pretty_print=True))
@@ -107,7 +110,6 @@ def point_symbolizer(rule, status):
     css_parameter._node.attrib['name']="fill"
     css_parameter._node.text=colour(status)
     fill.CssParameter=css_parameter
-    #fill.create_cssparameter("fill",colour(status))
     stroke = Stroke(mark)
     stroke.create_cssparameter("stroke","#000000")
     stroke.create_cssparameter("stroke-width","1")
